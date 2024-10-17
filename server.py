@@ -4,12 +4,14 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+import pytz
 
 app = Flask(__name__)
 CORS(app)
 
 # PostgreSQL database connection string from Render
 engine = create_engine('postgresql://portfolio_db_cjbj_user:53neyS5lEX4iQVzLUpxtOsiXElplgVzD@dpg-cs8itc23esus73aqlbu0-a.frankfurt-postgres.render.com:5432/portfolio_db_cjbj')
+local_tz = pytz.timezone('Europe/Zurich')
 
 # Base for declarative models
 Base = declarative_base()
@@ -58,7 +60,7 @@ def get_messages():
 
         # Return the messages in JSON format, including the timestamp
         return jsonify([{
-            'date_time': message.timestamp.strftime("%d/%m/%Y %H:%M:%S"),  # Format the timestamp for output
+             'date_time': message.timestamp.astimezone(local_tz).strftime("%d/%m/%Y %H:%M:%S"),  # Format the timestamp for output
             'name': message.name,
             'email': message.email,
             'description': message.description

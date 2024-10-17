@@ -13,3 +13,4 @@ wheel==0.44.0
 gunicorn
 SQLAlchemy
 psycopg2-binary  # PostgreSQL adapter
+pytz==2024.2
