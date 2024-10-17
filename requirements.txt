@@ -11,3 +11,5 @@ setuptools==75.1.0
 Werkzeug==3.0.4
 wheel==0.44.0
 gunicorn
+SQLAlchemy
+psycopg2-binary  # PostgreSQL adapter
