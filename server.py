@@ -1,21 +1,69 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS to allow requests from your frontend
-the_database = []
+
+# PostgreSQL database connection string from Render
+engine = create_engine('postgresql://portfolio_db_cjbj_user:53neyS5lEX4iQVzLUpxtOsiXElplgVzD@dpg-cs8itc23esus73aqlbu0-a.frankfurt-postgres.render.com:5432/portfolio_db_cjbj')
+
+# Base for declarative models
+Base = declarative_base()
+
+# Define the 'messages' table
+class Message(Base):
+    __tablename__ = 'messages'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    email = Column(String)
+    description = Column(String)
+
+# Create the table in the database
+Base.metadata.create_all(engine)
+
+# Create session factory
+Session = sessionmaker(bind=engine)
+
 @app.route('/send_message', methods=['POST'])
 def send_message():
+    session = Session()  # Create a new session for this request
     data = request.json  # Retrieve JSON data from the frontend
     name = data.get('name')
     email = data.get('email')
     description = data.get('description')
-    the_database.append({name, email, description})
 
-    # You can process the data here (send an email, store it in a DB, etc.)
-    print(f"New message  {the_database}")
-    # For demonstration purposes, just return a success message
-    return jsonify({"message": "Message received !"}), 200
+    # Create a new message object and add it to the database
+    new_message = Message(name=name, email=email, description=description)
+    try:
+        session.add(new_message)
+        session.commit()  # Save the new message in the database
+        return jsonify({"message": "Message received!"}), 200
+    except Exception as e:
+        session.rollback()  # Roll back in case of an error
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()  # Always close the session
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    session = Session()  # Create a new session for this request
+    try:
+        # Query all the messages from the database
+        messages = session.query(Message).all()
+
+        # Return the messages in JSON format
+        return jsonify([{
+            'name': message.name,
+            'email': message.email,
+            'description': message.description
+        } for message in messages]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()  # Always close the session
 
 if __name__ == '__main__':
     app.run(debug=True)
