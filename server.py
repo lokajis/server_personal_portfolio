@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS to allow requests from your frontend
+CORS(app)
 
 # PostgreSQL database connection string from Render
 engine = create_engine('postgresql://portfolio_db_cjbj_user:53neyS5lEX4iQVzLUpxtOsiXElplgVzD@dpg-cs8itc23esus73aqlbu0-a.frankfurt-postgres.render.com:5432/portfolio_db_cjbj')
@@ -13,13 +14,14 @@ engine = create_engine('postgresql://portfolio_db_cjbj_user:53neyS5lEX4iQVzLUpxt
 # Base for declarative models
 Base = declarative_base()
 
-# Define the 'messages' table
+# Define the 'messages' table with a timestamp field
 class Message(Base):
     __tablename__ = 'messages'
     id = Column(Integer, primary_key=True)
     name = Column(String)
     email = Column(String)
     description = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)  # Add timestamp with default as current time (UTC)
 
 # Create the table in the database
 Base.metadata.create_all(engine)
@@ -35,7 +37,7 @@ def send_message():
     email = data.get('email')
     description = data.get('description')
 
-    # Create a new message object and add it to the database
+    # Create a new message object with timestamp and add it to the database
     new_message = Message(name=name, email=email, description=description)
     try:
         session.add(new_message)
@@ -54,8 +56,9 @@ def get_messages():
         # Query all the messages from the database
         messages = session.query(Message).all()
 
-        # Return the messages in JSON format
+        # Return the messages in JSON format, including the timestamp
         return jsonify([{
+            'date_time': message.timestamp.strftime("%d/%m/%Y %H:%M:%S"),  # Format the timestamp for output
             'name': message.name,
             'email': message.email,
             'description': message.description
