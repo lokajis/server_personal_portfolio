@@ -10,3 +10,4 @@ packaging==24.1  # if needed, otherwise remove
 setuptools==75.1.0
 Werkzeug==3.0.4
 wheel==0.44.0
+gunicorn
